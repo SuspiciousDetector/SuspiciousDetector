@@ -1,28 +1,17 @@
 import express from 'express';
 import bodyParser from 'body-parser';
-import fs from 'fs';
-import yaml from 'js-yaml';
+import { config } from './config';
 import SmeeClient from 'smee-client';
 import { WebhookHandler } from './webhookHandler';
 
-// Load configuration from YAML file
-let config;
-try {
-  const fileConfig = fs.readFileSync('./config.yml', 'utf8');
-  config = yaml.load(fileConfig) as any;
-} catch (e) {
-  console.error('Error loading configuration:', e);
-  process.exit(1);
-}
-
 const app = express();
-const port = config.server.port;
+const port = config.serverPort;
 
 app.use(bodyParser.json());
 
 // Initialize and start smee client for forwarding webhooks to localhost
 const smee = new SmeeClient({
-    source: config.smee.url,
+    source: config.smeeUrl,
     target: `http://localhost:${port}/webhook`,
     logger: console
 });
