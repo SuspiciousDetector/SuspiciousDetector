@@ -2,6 +2,7 @@ import { SuspiciousBehavior } from './suspiciousBehaviors/suspiciousBehavior';
 import { PushTimeBehavior } from './suspiciousBehaviors/pushTimeBehavior';
 import { HackerTeamBehavior } from './suspiciousBehaviors/hackerTeamBehavior';
 import { QuickDeleteRepoBehavior } from './suspiciousBehaviors/quickDeleteRepoBehavior';
+import { Notifier } from './notifiers/notifier';
 
 // Event types that this behavior detector supports.
 type EventType = 'push' | 'team' | 'repository' | string;
@@ -9,7 +10,7 @@ type EventType = 'push' | 'team' | 'repository' | string;
 export class SuspiciousBehaviorDetector {
     private behaviorMap: Map<EventType, SuspiciousBehavior[]>;
 
-    constructor() {
+    constructor(private notifier: Notifier) {
         this.behaviorMap = new Map();
         this.initializeBehaviors();
     }
@@ -41,7 +42,7 @@ export class SuspiciousBehaviorDetector {
 
         for (const behavior of relevantBehaviors) {
             if (behavior.isSupicious(payload)) {
-                console.log(behavior.getDescription(payload));
+                this.notifier.notify(behavior.getDescription(payload));
             }
         }
     }

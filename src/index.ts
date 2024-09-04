@@ -4,6 +4,7 @@ import { config } from './config';
 import SmeeClient from 'smee-client';
 import { WebhookHandler } from './webhookHandler';
 import { SuspiciousBehaviorDetector } from './suspiciousBehaviorDetector';
+import { ConsoleNotifier } from './notifiers/consoleNotifier';
 
 const app = express();
 const port = config.serverPort;
@@ -19,7 +20,8 @@ const smee = new SmeeClient({
 smee.start();
 
 // Initializea app components
-const detector = new SuspiciousBehaviorDetector();
+const notifier = new ConsoleNotifier();
+const detector = new SuspiciousBehaviorDetector(notifier);
 const webhookHandler = new WebhookHandler(detector);
 
 /**
