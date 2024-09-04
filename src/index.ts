@@ -3,6 +3,7 @@ import bodyParser from 'body-parser';
 import { config } from './config';
 import SmeeClient from 'smee-client';
 import { WebhookHandler } from './webhookHandler';
+import { SuspiciousBehaviorDetector } from './suspiciousBehaviorDetector';
 
 const app = express();
 const port = config.serverPort;
@@ -17,14 +18,16 @@ const smee = new SmeeClient({
 });
 smee.start();
 
-// Initialize webhook component
-const webhookHandler = new WebhookHandler();
+// Initializea app components
+const detector = new SuspiciousBehaviorDetector();
+const webhookHandler = new WebhookHandler(detector);
 
 /**
  * Define webhook endpoint which receives GitHub webhook events and send them to the WebhookHandler
  */
 app.post('/webhook', (req, res) => {
-    webhookHandler.handle(req.body);
+    const eventType = req.headers['x-github-event'] as string;
+    webhookHandler.handle(eventType, req.body);
     res.sendStatus(200);
 });
 
