@@ -1,5 +1,0 @@
-server:
-  port: 3000
-
-smee:
-  url: 'https://smee.io/your_smee_url'

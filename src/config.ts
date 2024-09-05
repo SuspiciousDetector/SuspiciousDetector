@@ -1,36 +1,42 @@
 import fs from 'fs';
 import yaml from 'js-yaml';
+import path from 'path';
+import { logger } from './utils/logger';
 
 interface Config {
-    server: {
-        port: number;
-    };
-    smee: {
-        url: string;
-    };
+    server: { port: number };
+    database: { filename: string };
+    smee?: { url: string };
 }
 
 class Configuration {
     private config: Config;
 
     constructor() {
+        this.config = this.loadConfig();
+    }
+
+    private loadConfig(): Config {
         try {
-            const fileConfig = fs.readFileSync('./config.yml', 'utf8');
-            this.config = yaml.load(fileConfig) as Config;
+            const configPath = path.resolve('./config/default.yml');
+            const fileContents = fs.readFileSync(configPath, 'utf8');
+            return yaml.load(fileContents) as Config;
         } catch (e) {
-            console.error('Error loading configuration:', e);
+            logger.error('Error loading configuration:', e);
             process.exit(1);
         }
     }
 
-    // Get server port
     get serverPort(): number {
         return this.config.server.port;
     }
 
-    // Get seem url
-    get smeeUrl(): string {
-        return this.config.smee.url;
+    get databaseFilename(): string {
+        return this.config.database.filename;
+    }
+
+    get smeeUrl(): string | undefined {
+        return this.config.smee?.url;
     }
 }
 

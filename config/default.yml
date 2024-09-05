@@ -1,0 +1,8 @@
+server:
+  port: 3000
+
+database:
+  filename: './repo_creation_times.sqlite'
+
+smee:
+  url: 'https://smee.io/your_smee_url'
