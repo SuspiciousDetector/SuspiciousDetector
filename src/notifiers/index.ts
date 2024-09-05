@@ -22,12 +22,22 @@ export async function loadNotifiers(): Promise<Notifier[]> {
   for (const file of notifierFiles) {
     try {
       const NotifierClass = (await import(path.join(notifiersDir, file))).default;
-      notifiers.push(new NotifierClass());
-      logger.info(`Loaded notifier: ${file}`);
+      if (isNotifierClass(NotifierClass)) {
+        notifiers.push(new NotifierClass());
+        logger.info(`Loaded notifier: ${file}`);
+    }
     } catch (error) {
       logger.error(`Failed to load notifier ${file}:`, error);
     }
   }
 
   return notifiers;
+}
+
+function isNotifierClass(cls: any): cls is new () => Notifier {
+    return (
+        typeof cls === 'function' &&
+        cls.prototype !== undefined &&
+        'notify' in cls.prototype
+    );
 }

@@ -22,12 +22,23 @@ export async function loadBehaviors(): Promise<SuspiciousBehavior[]> {
     for (const file of behaviorFiles) {
         try {
             const BehaviorClass = (await import(path.join(behaviorsDir, file))).default;
-            behaviors.push(new BehaviorClass());
-            logger.info(`Loaded suspicious behavior: ${file}`);
+            if (isSuspiciousBehaviorClass(BehaviorClass)) {
+                behaviors.push(new BehaviorClass());
+                logger.info(`Loaded suspicious behavior: ${file}`);
+            }
         } catch (error) {
             logger.error(`Failed to load suspicious behavior ${file}:`, error);
         }
     }
 
     return behaviors;
+}
+
+function isSuspiciousBehaviorClass(cls: any): cls is new () => SuspiciousBehavior {
+    return (
+        typeof cls === 'function' &&
+        cls.prototype !== undefined &&
+        'isSupicious' in cls.prototype &&
+        'getDescription' in cls.prototype
+    );
 }
