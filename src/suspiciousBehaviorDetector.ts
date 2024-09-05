@@ -1,49 +1,46 @@
-import { SuspiciousBehavior } from './suspiciousBehaviors/suspiciousBehavior';
-import { PushTimeBehavior } from './suspiciousBehaviors/pushTimeBehavior';
-import { HackerTeamBehavior } from './suspiciousBehaviors/hackerTeamBehavior';
-import { QuickDeleteRepoBehavior } from './suspiciousBehaviors/quickDeleteRepoBehavior';
-import { Notifier } from './notifiers/notifier';
+import { Notifier } from './notifiers/notifier.interface';
+import { SuspiciousBehavior } from './suspiciousBehaviors/suspiciousBehavior.interface';
+import { logger } from './utils/logger';
 
-// Event types that this behavior detector supports.
-type EventType = 'push' | 'team' | 'repository' | string;
+export interface WebhookPayload {
+    eventType: string;
+    payload: any;
+}
 
 export class SuspiciousBehaviorDetector {
-    private behaviorMap: Map<EventType, SuspiciousBehavior[]>;
+    // Map to store behavior detectors indexed by the event types they support
+    private behaviorMap: Map<string, SuspiciousBehavior[]> = new Map();
 
-    constructor(private notifier: Notifier) {
-        this.behaviorMap = new Map();
-        this.initializeBehaviors();
+    constructor(private notifiers: Notifier[], behaviors: SuspiciousBehavior[]) {
+        this.initializeBehaviors(behaviors);
     }
 
-    // Create all suspicious behavior the system supports
-    private initializeBehaviors(): void {
-        const pushTimeBehavior = new PushTimeBehavior();
-        const hackerTeamBehavior = new HackerTeamBehavior();
-        const quickDeleteRepoBehavior = new QuickDeleteRepoBehavior();
-
-        this.addBehavior('push', pushTimeBehavior);
-        this.addBehavior('team', hackerTeamBehavior);
-        this.addBehavior('repository', quickDeleteRepoBehavior);
-    }
-
-    private addBehavior(eventType: EventType, behavior: SuspiciousBehavior): void {
-        if (!this.behaviorMap.has(eventType)) {
-            this.behaviorMap.set(eventType, []);
-        }
-        this.behaviorMap.get(eventType)!.push(behavior);
+    // Initializes the behavior map with the provided behavior detectors.
+    private initializeBehaviors(behaviors: SuspiciousBehavior[]): void {
+        behaviors.forEach(behavior => {
+            behavior.supportedEvents.forEach(eventType => {
+                if (!this.behaviorMap.has(eventType)) {
+                    this.behaviorMap.set(eventType, []);
+                }
+                this.behaviorMap.get(eventType)!.push(behavior);
+            });
+        });
     }
 
     /**
-     * Detect suspicious behaviors using provided webhook payload
-     * @param payload - webhook payload from GitHub
+     * Detects suspicious behaviors based on the provided webhook payload.
+     * If suspicious behavior is detected, all registered notifiers are called.
+     * @param webhookPayload 
      */
-    detect(eventType: string, payload: any): void {
-        const relevantBehaviors = this.behaviorMap.get(eventType as EventType) || [];
+    public detect(webhookPayload: WebhookPayload): void {
+        const { eventType, payload } = webhookPayload;
+        const relevantBehaviors = this.behaviorMap.get(eventType) || [];
 
-        for (const behavior of relevantBehaviors) {
+        relevantBehaviors.forEach(behavior => {
             if (behavior.isSupicious(payload)) {
-                this.notifier.notify(behavior.getDescription(payload));
+                const description = behavior.getDescription(payload);
+                this.notifiers.forEach(notifier => notifier.notify(description));
             }
-        }
+        });
     }
 }

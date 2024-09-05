@@ -69,3 +69,13 @@ npm run dev
 5. Set Content type to `application/json`.
 6. Select the events you want to monitor (Repositories, Pushes, Teams), or just to choose 'Send me everything'.
 7. Save the webhook.
+
+## Adding New Behaviors/Notifiers
+
+To add a new suspicious behavior detector or notifier:
+
+1. Create a new file in `src/suspiciousBehaviors/` (e.g., `newBehavior.ts`) or in `src/notifiers/` (e.g., `newNotifier.ts`).
+2. Implement the `SuspiciousBehavior` or `Notifier` interface.
+3. Export the class as the default export.
+
+The application will automatically load and use the new behavior/notifier.
